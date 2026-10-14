@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マッサージルーム</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #141210; color: #f3e6d4; font-family: system-ui, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #dock { position: fixed; z-index: 3; top: 0; left: 0; bottom: 0; width: 280px; overflow: auto; padding: 16px 14px 24px; background: rgba(20,18,16,.88); box-sizing: border-box; }
+  #dock h1 { font-size: 18px; margin: 0 0 4px; }
+  #dock .sub { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: #cbbba8; }
+  #dock .hint { margin: 0 0 8px; font-size: 11px; line-height: 1.45; color: #b7a898; }
+  #dock h2 { font-size: 12px; margin: 14px 0 6px; color: #b7a898; font-weight: 600; }
+  #dock code { font-size: 11px; color: #f3e6d4; }
+  #dock button { display: block; width: 100%; margin: 0 0 6px; padding: 8px 10px; border: 0; border-radius: 8px; background: #3a342e; color: #f6efe6; font-size: 14px; text-align: left; cursor: pointer; }
+  #dock button.on { background: #2f6f66; }
+  #dock .row { display: flex; gap: 6px; }
+  #dock .row button { flex: 1; text-align: center; }
+  #meter { height: 8px; background: #3a342e; border-radius: 99px; overflow: hidden; margin-top: 6px; }
+  #meter > div { height: 100%; width: 0; background: #e7a3a8; }
+  #mood { font-size: 13px; min-height: 2.6em; line-height: 1.45; }
+  #overlay { position: fixed; z-index: 4; left: 280px; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 16px 18px; pointer-events: none; }
+  #info { background: rgba(16,14,12,.8); padding: 8px 14px; border-radius: 10px; font-size: 13px; max-width: 640px; text-align: center; line-height: 1.55; }
+  #vrbtn { pointer-events: auto; font-size: 18px; font-weight: 700; padding: 12px 28px; border-radius: 999px; border: 0; background: #e7b08a; color: #2a160f; cursor: pointer; }
+  #vrbtn:disabled { background: #554; color: #ccc; cursor: default; }
+  #err { position: fixed; z-index: 6; right: 8px; bottom: 8px; max-width: 46vw; color: #ffd0d0; font-size: 12px; white-space: pre-wrap; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./lib/three.module.js" } }
+</script>
+</head>
+<body>
+<aside id="dock">
+  <h1>マッサージルーム</h1>
+  <p class="sub">体位はベッドの上で切り替わります。Quest 3 は「VRを開始」から。触る操作と、手足の関節を動かす操作は別です。</p>
+  <h2>キャラクター</h2>
+  <p class="hint">VRM 0.0 と 1.0 を <code>assets/VRM</code> に追加してリポジトリへ上げると、ここに出ます。</p>
+  <div id="vrmlist"></div>
+  <button type="button" id="vrmrefresh">一覧を更新</button>
+  <h2>体位</h2>
+  <div class="row">
+    <button type="button" data-pose="supine">仰向け</button>
+    <button type="button" data-pose="prone">うつ伏せ</button>
+  </div>
+  <div class="row">
+    <button type="button" data-pose="missionary">正常位</button>
+    <button type="button" data-pose="doggy">後背位</button>
+  </div>
+  <button type="button" data-pose="cowgirl">騎乗位</button>
+  <button type="button" id="jointbtn">関節を動かす</button>
+  <h2>衣装の着脱</h2>
+  <p class="hint">VRM に服や着替えのパーツが入っているとき、ここで着脱できます。</p>
+  <div id="clothlist"></div>
+  <div class="row" id="clothall">
+    <button type="button" data-all="on">すべて着る</button>
+    <button type="button" data-all="off">すべて脱ぐ</button>
+  </div>
+  <h2>手</h2>
+  <button type="button" id="oilbtn">オイルを手につける</button>
+  <button type="button" id="resetbtn">最初の状態に戻す</button>
+  <h2>反応</h2>
+  <div id="mood">落ち着いている</div>
+  <div id="meter"><div></div></div>
+</aside>
+<div id="overlay">
+  <div id="info">読み込み中…</div>
+  <button id="vrbtn" type="button" disabled>確認中…</button>
+</div>
+<pre id="err"></pre>
+<script>
+  window.addEventListener('error', (e) => {
+    const box = document.getElementById('err');
+    const info = document.getElementById('info');
+    const msg = (e && e.message) || 'スクリプトを読み込めませんでした';
+    if (box) box.textContent += msg + '\n';
+    if (info && info.textContent.indexOf('読み込み中') === 0) info.textContent = '読み込みに失敗しました。ページを再読み込みしてください。';
+  });
+</script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
