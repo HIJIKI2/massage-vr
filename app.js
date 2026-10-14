@@ -1,5 +1,12 @@
 // マッサージルーム。主観移動 + コントローラー / ハンドトラッキング。
 import * as THREE from 'three';
+window.__appBoot = true;
+{
+  const bootInfo = document.getElementById('info');
+  const bootBtn = document.getElementById('vrbtn');
+  if (bootInfo) bootInfo.textContent = '部屋を準備しています…';
+  if (bootBtn) bootBtn.textContent = '準備中…';
+}
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createMaterials } from './src/materials.js';
 import { buildRoom, BED_TOP } from './src/room.js';

@@ -920,6 +920,11 @@ function vrmNames(files) {
   return [...new Set(names)].sort((a, b) => a.localeCompare(b, 'ja'));
 }
 
+function fetchSoon(url) {
+  const signal = AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined;
+  return fetch(url, { cache: 'no-store', signal });
+}
+
 async function listFromGitHubPages() {
   const host = location.hostname;
   const suffix = '.github.io';
@@ -929,10 +934,7 @@ async function listFromGitHubPages() {
   const parts = location.pathname.split('/').filter(Boolean);
   const repo = parts.length ? parts[0] : `${owner}.github.io`;
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/assets/VRM`;
-  const res = await fetch(url, {
-    headers: { Accept: 'application/vnd.github+json' },
-    cache: 'no-store',
-  });
+  const res = await fetchSoon(url);
   if (!res.ok) return null;
   const data = await res.json();
   if (!Array.isArray(data)) return null;
@@ -941,14 +943,14 @@ async function listFromGitHubPages() {
 
 export async function listVrmFiles() {
   try {
-    const res = await fetch('./api/vrms', { cache: 'no-store' });
+    const res = await fetchSoon('./api/vrms');
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.files)) return vrmNames(data.files);
     }
   } catch { /* GitHub Pages など API のない静的ホスト */ }
   try {
-    const res = await fetch(VRM_DIR, { cache: 'no-store' });
+    const res = await fetchSoon(VRM_DIR);
     if (res.ok) {
       const html = await res.text();
       const names = [];

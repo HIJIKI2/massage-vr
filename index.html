@@ -64,18 +64,72 @@
   <div id="meter"><div></div></div>
 </aside>
 <div id="overlay">
-  <div id="info">読み込み中…</div>
+  <div id="info">スクリプトを読み込んでいます…</div>
   <button id="vrbtn" type="button" disabled>確認中…</button>
 </div>
 <pre id="err"></pre>
 <script>
-  window.addEventListener('error', (e) => {
-    const box = document.getElementById('err');
-    const info = document.getElementById('info');
-    const msg = (e && e.message) || 'スクリプトを読み込めませんでした';
-    if (box) box.textContent += msg + '\n';
-    if (info && info.textContent.indexOf('読み込み中') === 0) info.textContent = '読み込みに失敗しました。ページを再読み込みしてください。';
-  });
+  (function () {
+    var info = document.getElementById('info');
+    var btn = document.getElementById('vrbtn');
+    var err = document.getElementById('err');
+    var path = location.pathname;
+    var last = path.split('/').pop();
+    if (location.protocol === 'file:') {
+      info.textContent = 'フォルダを直接開くと動きません。GitHub Pages の https://ユーザー名.github.io/リポジトリ名/ で開いてください。';
+      btn.textContent = '起動できません';
+      return;
+    }
+    if (last && last.indexOf('.') < 0) {
+      location.replace(path + '/' + location.search + location.hash);
+      return;
+    }
+    function show(msg) {
+      info.textContent = msg;
+      btn.disabled = true;
+      btn.textContent = '起動できません';
+      err.textContent += msg + '\n';
+    }
+    window.addEventListener('error', function (e) {
+      if (window.__appBoot && !(e.target && e.target.src)) return;
+      var src = e.target && e.target.tagName === 'SCRIPT' && e.target.src;
+      show(src ? ('このファイルを読めません: ' + src) : (e.message || 'スクリプトを読み込めませんでした'));
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) {
+      var reason = e.reason;
+      var msg = reason && reason.message ? reason.message : String(reason || '起動に失敗しました');
+      if (window.__appBoot) { err.textContent += msg + '\n'; return; }
+      show(msg);
+    });
+    setTimeout(function () {
+      if (window.__appBoot) return;
+      var files = ['./app.js', './lib/three.module.js', './lib/three-vrm.module.js', './lib/GLTFLoader.js', './lib/BufferGeometryUtils.js', './src/ccbody.js'];
+      Promise.all(files.map(function (url) {
+        return fetch(url).then(function (res) {
+          return { url: url, ok: res.ok, type: (res.headers.get('content-type') || '').toLowerCase() };
+        }).catch(function () {
+          return { url: url, ok: false, type: '' };
+        });
+      })).then(function (rows) {
+        if (window.__appBoot) return;
+        var bad = rows.filter(function (row) {
+          if (!row.ok) return true;
+          return row.type.indexOf('javascript') < 0 && row.type.indexOf('ecmascript') < 0;
+        });
+        if (bad.length) {
+          show('アップロードから漏れています: ' + bad.map(function (row) {
+            return row.url + (row.ok ? '（種類 ' + (row.type || '不明') + '）' : '（見つからない）');
+          }).join('、'));
+          return;
+        }
+        if (location.hostname === 'github.com') {
+          show('github.com のファイル画面では動きません。Pages の https://ユーザー名.github.io/リポジトリ名/ を開いてください。');
+          return;
+        }
+        show('スクリプトは届いていますが、起動処理で止まっています。ページを再読み込みしてください。');
+      });
+    }, 12000);
+  })();
 </script>
 <script type="module" src="./app.js"></script>
 </body>
